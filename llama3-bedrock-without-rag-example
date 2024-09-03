@@ -1,0 +1,41 @@
+import boto3
+import json
+
+prompt_data = """
+Act as a Shakespeare and write a poem on Generative AI
+"""
+
+# Initialize Bedrock client with correct region
+bedrock = boto3.client(service_name="bedrock-runtime", region_name="us-east-1")
+
+# Define the payload for LLaMA3 model
+payload = {
+    "prompt": prompt_data,   # Use 'prompt' instead of 'input_text'
+    "max_gen_len": 512,      # Correct key for controlling maximum generation length
+    "temperature": 0.5,      # Keep temperature if supported
+    "top_p": 0.9             # Keep top_p if supported
+}
+
+body = json.dumps(payload)
+model_id = "meta.llama3-70b-instruct-v1:0"  # Ensure this is a valid model ID
+
+try:
+    response = bedrock.invoke_model(
+        body=body,
+        modelId=model_id,
+        accept="application/json",
+        contentType="application/json"
+    )
+
+    # Parse the response
+    response_body = json.loads(response.get("body").read())
+
+    # Check if the expected key is in the response
+    if 'generation' in response_body:
+        response_text = response_body['generation']
+        print(response_text)
+    else:
+        print("No 'generation' key found in the response. Check the response structure.")
+
+except Exception as e:
+    print(f"An error occurred: {e}")
